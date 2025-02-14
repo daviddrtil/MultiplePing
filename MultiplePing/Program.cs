@@ -66,15 +66,15 @@ Options:
         PingSettings.IpAddresses = ParseIpAddresses(args);
     }
 
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         ParseArgs(args);
 
         PingSettings.XmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-            "..", "..", "..", "Output", "ping.xml");
+            "..", "..", "..", "ping.xml");
         Console.WriteLine($"Storing data into XML file: {PingSettings.XmlPath}");
 
-        PingLogger.PerformAndStorePings();
+        await PingLogger.PerformAndStorePingsAsync();
         PingLogger.CreatePingStatistics();
     }
 }

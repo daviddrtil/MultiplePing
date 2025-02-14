@@ -4,9 +4,9 @@ MultiplePing is a command-line utility that performs ICMP ping requests to speci
 
 ## Features
 
-✅ Supports both **IP addresses and domain names** (automatic DNS resolution)
-✅ Customizable **ping interval** (default: 100ms)
-✅ Stores responses in a structured **XML file**
+- Supports both **IP addresses and domain names** (automatic DNS resolution)
+- Customizable **ping interval** (default: 100ms)
+- Stores responses in a structured **XML file**
 
 ## Usage
 

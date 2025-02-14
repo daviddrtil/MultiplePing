@@ -29,11 +29,62 @@ internal class PingLogger
         xmlWriter.WriteEndElement(); // </ipAddresses>
     }
 
+    /// <summary>
+    /// Pings a single host in a loop and writes results.
+    /// </summary>
+    private static async Task PingHostAsync(int index, IPAddress ipAddress,
+        XmlWriter xmlWriter, SemaphoreSlim semaphore)
+    {
+        using var ping = new Ping();
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.ElapsedMilliseconds < PingSettings.TotalDurationSeconds * 1000)
+        {
+            long duration;
+            try
+            {
+                var reply = await ping.SendPingAsync(ipAddress, PingSettings.TimeoutMs);
+                duration = reply.Status == IPStatus.Success ? reply.RoundtripTime : -1L;
+            }
+            catch (PingException)
+            {
+                duration = -1L;
+            }
+
+            await semaphore.WaitAsync();
+            try
+            {
+                xmlWriter.WriteStartElement("reply");
+                xmlWriter.WriteAttributeString("idx", index.ToString());
+                xmlWriter.WriteAttributeString("duration", duration.ToString());
+                xmlWriter.WriteEndElement(); // </reply>
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+
+            await Task.Delay(PingSettings.PingIntervalMs);
+        }
+    }
+
+    /// <summary>
+    /// Runs ping tasks in parallel and writes results to XML.
+    /// </summary>
+    private static async Task ProcessPingsAsync(XmlWriter xmlWriter)
+    {
+        var semaphore = new SemaphoreSlim(1, 1); // Used to XML writing
+
+        var tasks = PingSettings.IpAddresses
+            .Select((ip, index) => PingHostAsync(index, ip, xmlWriter, semaphore))
+            .ToArray();
+
+        await Task.WhenAll(tasks);
+    }
 
     /// <summary>
     /// Performs ICMP pings and stores the responses in the XML file.
     /// </summary>
-    public static void PerformAndStorePings()
+    public static async Task PerformAndStorePingsAsync()
     {
         var xmlSettings = new XmlWriterSettings()
         {
@@ -50,53 +101,9 @@ internal class PingLogger
 
         WriteXMLHeader(xmlWriter);
 
-        ProcessPings(xmlWriter);
+        await ProcessPingsAsync(xmlWriter);
 
         xmlWriter.WriteEndElement(); // </ping>
-    }
-
-    private static void ProcessPings(XmlWriter xmlWriter)
-    {
-        var xmlLock = new object();
-        var threads = new Thread[PingSettings.IpAddresses.Length];
-        for (var i = 0; i < PingSettings.IpAddresses.Length; i++)
-        {
-            var threadData = new PingThreadData(i, PingSettings.IpAddresses[i], xmlWriter, xmlLock);
-            threads[i] = new Thread(PingThread);
-            threads[i].Start(threadData);
-        }
-        foreach (var thread in threads)
-        {
-            thread.Join();
-        }
-    }
-
-    private static void PingThread(object obj)
-    {
-        using var ping = new Ping();
-        var threadData = (PingThreadData)obj;
-        var stopwatch = Stopwatch.StartNew();
-        while (stopwatch.ElapsedMilliseconds < PingSettings.TotalDurationSeconds * 1000)
-        {
-            long duration;
-            try
-            {
-                var reply = ping.Send(threadData.IpAddress, PingSettings.TimeoutMs);
-                duration = reply.Status == IPStatus.Success ? reply.RoundtripTime : -1L;
-            }
-            catch (PingException)
-            {
-                duration = -1L;
-            }
-            lock (threadData.XmlLock)
-            {
-                threadData.XmlWriter.WriteStartElement("reply");
-                threadData.XmlWriter.WriteAttributeString("idx", threadData.Index.ToString());
-                threadData.XmlWriter.WriteAttributeString("duration", duration.ToString());
-                threadData.XmlWriter.WriteEndElement(); // </reply>
-            }
-            Thread.Sleep(PingSettings.PingIntervalMs);
-        }
     }
 
     /// <summary>
