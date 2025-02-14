@@ -4,7 +4,6 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
-using MultiplePing.Models;
 
 namespace MultiplePing;
 
@@ -17,7 +16,7 @@ internal class PingLogger
     {
         xmlWriter.WriteStartElement("ipAddresses");
 
-        for (int i = 0; i < PingSettings.IpAddresses.Length; i++)
+        for (var i = 0; i < PingSettings.IpAddresses.Length; i++)
         {
             var ipAddress = PingSettings.IpAddresses[i];
             xmlWriter.WriteStartElement("ipAddress");
@@ -131,14 +130,18 @@ internal class PingLogger
                     .Where(duration => duration >= 0)
                     .ToList();
 
+                var idx = int.Parse(ipAddress.Attribute("idx")!.Value);
+                var fullHostname = PingSettings.HostNames[idx] != ipName
+                    ? $"{PingSettings.HostNames[idx]} ({ipName})"
+                    : ipName;
                 if (replies.Count != 0)
                 {
                     var averageLatency = (int)replies.Average();
-                    Console.WriteLine($"IP address {ipName} average latency: {averageLatency} ms");
+                    Console.WriteLine($"{fullHostname} average latency: {averageLatency} ms");
                 }
                 else
                 {
-                    Console.WriteLine($"IP address {ipName} had no valid responses.");
+                    Console.WriteLine($"{fullHostname} had no valid responses.");
                 }
             }
         }

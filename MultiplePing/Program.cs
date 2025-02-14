@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using System.Net;
-using MultiplePing.Models;
 
 namespace MultiplePing;
 
@@ -10,7 +9,7 @@ namespace MultiplePing;
 /// </summary>
 class Program
 {
-    private static void PrintHelp() => 
+    private static void PrintHelp() =>
         Console.WriteLine(@"
 Usage: multiping [ADDRESSES...] [DURATION]
 Example: multiping www.google.com www.seznam.cz 30
@@ -22,26 +21,22 @@ Arguments:
 Options:
   -h|--help    Display this help.
 ");
-    // todo  -a|--append  Append responses to an existing file.
 
-    // todo run:
-    // #1: cd C:\Users\daviddrtil\source\repos\MultiplePing\MultiplePing\bin\Debug\net8.0
-    // #2: .\MultiplePing.exe www.google.com www.seznam.cz 5
-
-    private static IPAddress[] ParseIpAddresses(string[] args)
+    private static void ParseIpAddresses(string[] args)
     {
-        int ipCount = args.Length - 1;
-        var pingTargets = new IPAddress[ipCount];
-        for (int i = 0; i < ipCount; i++)
+        var ipCount = args.Length - 1;
+        PingSettings.IpAddresses = new IPAddress[ipCount];
+        PingSettings.HostNames = new string[ipCount];
+        for (var i = 0; i < ipCount; i++)
         {
-            string hostname = args[i];
-            if (!IPAddress.TryParse(hostname, out pingTargets[i]))
+            var hostname = args[i];
+            PingSettings.HostNames[i] = hostname;
+            if (!IPAddress.TryParse(hostname, out PingSettings.IpAddresses[i]!))
             {
-                pingTargets[i] = Dns.GetHostEntry(hostname).AddressList.FirstOrDefault()
+                PingSettings.IpAddresses[i] = Dns.GetHostEntry(hostname).AddressList.FirstOrDefault()
                     ?? throw new ArgumentException($"Error: Unable to resolve IP address '{hostname}'");
             }
         }
-        return pingTargets;
     }
 
     private static void ParseArgs(string[] args)
@@ -56,14 +51,14 @@ Options:
             throw new ArgumentException($"Error: Invalid arguments count.");
         }
 
-        string durationArg = args[^1];
-        if (!int.TryParse(durationArg, NumberFormatInfo.InvariantInfo, out int durationInSec))
+        var durationArg = args[^1];
+        if (!int.TryParse(durationArg, NumberFormatInfo.InvariantInfo, out var durationInSec))
         {
             throw new ArgumentException($"Error: Invalid duration '{durationArg}', expected a numeric value.");
         }
         PingSettings.TotalDurationSeconds = durationInSec;
 
-        PingSettings.IpAddresses = ParseIpAddresses(args);
+        ParseIpAddresses(args);
     }
 
     static async Task Main(string[] args)

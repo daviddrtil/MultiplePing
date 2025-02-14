@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace MultiplePing.Models   // todo rename folder its not model
+namespace MultiplePing
 {
     internal class PingSettings
     {
@@ -10,6 +10,11 @@ namespace MultiplePing.Models   // todo rename folder its not model
         public static IPAddress[] IpAddresses { get; set; } = [];
 
         /// <summary>
+        /// List of hostnames entered as arguments
+        /// </summary>
+        public static string[] HostNames { get; set; } = [];
+
+        /// <summary>
         /// Total duration in seconds for which pings will be sent
         /// </summary>
         public static int TotalDurationSeconds { get; set; } = 30;
@@ -17,7 +22,7 @@ namespace MultiplePing.Models   // todo rename folder its not model
         /// <summary>
         /// Interval between pings in milliseconds
         /// </summary>
-        public static int PingIntervalMs { get; set; } = 100; // todo should be configurable
+        public static int PingIntervalMs { get; set; } = 100;
 
         /// <summary>
         /// Maximum time in milliseconds to wait for a ping response before considering it a failure

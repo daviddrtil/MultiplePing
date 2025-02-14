@@ -2,7 +2,7 @@
   "profiles": {
     "MultiplePing": {
       "commandName": "Project",
-      "commandLineArgs": "8.8.8.8 www.seznam.cz 5"
+      "commandLineArgs": "www.google.com www.seznam.cz 5"
     }
   }
 }
