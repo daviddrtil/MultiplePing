@@ -71,7 +71,7 @@ Options:
         ParseArgs(args);
 
         PingSettings.XmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-            "..", "..", "..", "ping.xml");
+            "..", "..", "..", "Output", "ping.xml");
         Console.WriteLine($"Storing data into XML file: {PingSettings.XmlPath}");
 
         PingLogger.PerformAndStorePings();
